@@ -1,65 +1,96 @@
-# AWS-VPC-Setup-with-Public-Private-Subnets
-
-## Title: Setting Up a Secure AWS VPC with Public and Private Subnets
+## Setting Up a Secure AWS VPC with Public and Private Subnets using Ubuntu
 
 ### Introduction
-- Overview of AWS Virtual Private Cloud (VPC) and its importance
-- Objective of the lab: Setting up a secure VPC with public web servers and private database servers
+In this guide, we will walk through setting up a secure AWS Virtual Private Cloud (VPC) with public and private subnets using Ubuntu instances. We'll cover creating subnets, attaching an Internet Gateway (IGW), launching Ubuntu EC2 instances with Apache HTTP Server and MySQL, configuring security groups, and verifying connectivity between instances.
 
 ### Prerequisites
-- AWS account with necessary permissions (IAM roles)
-- Basic familiarity with AWS Management Console
-- Understanding of networking concepts (CIDR blocks, subnets, routing)
+Before starting, ensure you have:
+- An AWS account with administrative access.
+- Basic familiarity with AWS Management Console.
+- Understanding of networking concepts like CIDR blocks, subnets, and security groups.
 
 ### Step 1: Creating the VPC
-- Walkthrough of creating a new VPC in AWS Management Console
-- Selection of IPv4 CIDR block for the VPC (e.g., `10.0.0.0/16`)
-- Naming conventions and tags for the VPC
+1. **Log in to AWS Management Console:**
+   - Go to [AWS Management Console](https://aws.amazon.com/console/) and log in.
+
+2. **Navigate to VPC Dashboard:**
+   - Go to Services > VPC > Your VPCs.
+
+3. **Create a New VPC:**
+   - Click on "Create VPC".
+   - Enter a name (e.g., `MyVPC`) and a CIDR block (e.g., `10.0.0.0/16`).
+   - Click "Create".
 
 ### Step 2: Creating Subnets
-#### Public Subnet
-- Purpose: Hosting Apache web server accessible from the internet
-- Steps to create a public subnet within the VPC
-- Selection of IPv4 CIDR block for the public subnet (e.g., `10.0.1.0/24`)
-- Association with Internet Gateway (IGW) for internet access
-- Configuration of route table for the public subnet to route traffic through the IGW
+1. **Create Public Subnet:**
+   - Go to Subnets > Create subnet.
+   - Select your VPC (`MyVPC`).
+   - Enter a name (e.g., `PublicSubnet`) and a CIDR block (e.g., `10.0.1.0/24`).
+   - Click "Create".
 
-#### Private Subnet
-- Purpose: Hosting MySQL database server with restricted access
-- Steps to create a private subnet within the VPC
-- Selection of IPv4 CIDR block for the private subnet (e.g., `10.0.2.0/24`)
-- Configuration of route table for the private subnet:
-  - No direct route to the IGW for enhanced security
-  - Route for SSH access from specific IP ranges (e.g., public subnet instance IPs)
+2. **Create Private Subnet:**
+   - Go to Subnets > Create subnet.
+   - Select your VPC (`MyVPC`).
+   - Enter a name (e.g., `PrivateSubnet`) and a CIDR block (e.g., `10.0.2.0/24`).
+   - Click "Create".
 
-### Step 3: Instance Deployment and Configuration
-#### Public Subnet Instance (Apache Web Server)
-- Deployment of an EC2 instance in the public subnet
-- Installation of Apache HTTP Server with custom design
-- Verification of Apache web server functionality
+### Step 3: Attaching Internet Gateway (IGW)
+1. **Create Internet Gateway:**
+   - Go to Internet Gateways > Create internet gateway.
+   - Attach the IGW to `MyVPC`.
 
-#### Private Subnet Instance (MySQL Database Server)
-- Deployment of an EC2 instance in the private subnet
-- Installation and configuration of MySQL database server
-- Testing connectivity from the public subnet instance to the private subnet instance
+2. **Modify Route Table for Public Subnet:**
+   - Go to Route Tables > Select the route table associated with `PublicSubnet`.
+   - Edit routes to include `0.0.0.0/0` to IGW.
 
-### Step 4: Security Configuration
-- Configuration of Security Groups:
-  - Public subnet security group allowing inbound HTTP/HTTPS (optional SSH)
-  - Private subnet security group allowing inbound SSH from specific IP ranges only
-- Overview of Network ACLs:
-  - Default and custom Network ACL rules for inbound and outbound traffic control
+### Step 4: Launching Ubuntu EC2 Instances
+1. **Launch Public Subnet Instance (Apache HTTP Server):**
+   - Go to EC2 Dashboard > Instances > Launch Instance.
+   - Select an Ubuntu Server AMI.
+   - Choose `PublicSubnet`.
+   - Configure security group allowing inbound HTTP (port 80) and SSH (port 22) from your IP.
+   - Launch the instance, download the `.pem` key.
 
-### Step 5: Testing and Verification
-- Testing access to the Apache web server from the internet
-- SSH access from the public subnet instance to the private subnet instance using private IP
-- Verification of MySQL connectivity and database operations from the public subnet instance
+2. **Launch Private Subnet Instance (MySQL Database Server):**
+   - Follow the same steps as above, selecting `PrivateSubnet`.
+   - Configure security group allowing inbound SSH from `PublicSubnet` instance's IP only.
+
+### Step 5: Configuring Instances
+1. **Configure Public Subnet Instance (Apache HTTP Server):**
+   - SSH into the instance using the `.pem` key.
+   - Install Apache HTTP Server:
+     ```bash
+     sudo apt update
+     sudo apt install apache2 -y
+     sudo systemctl start apache2
+     sudo systemctl enable apache2
+     ```
+   - Create custom HTML page (`index.html`) in `/var/www/html`.
+
+2. **Testing Public Subnet Instance:**
+   - Access the Apache server from your web browser using the public IP.
+
+3. **Configure Private Subnet Instance (MySQL Database Server):**
+   - SSH into the instance using the `.pem` key.
+   - Install MySQL Server:
+     ```bash
+     sudo apt update
+     sudo apt install mysql-server -y
+     sudo systemctl start mysql
+     sudo systemctl enable mysql
+     ```
+   - Secure MySQL installation (`mysql_secure_installation`).
+
+### Step 6: Testing and Verification
+1. **Testing Connectivity:**
+   - From the public subnet instance, SSH into the private subnet instance using its private IP.
+   - Test database connectivity from the public subnet instance.
 
 ### Conclusion
-- Summary of key steps and configurations for a secure AWS VPC setup
-- Importance of implementing AWS security best practices for VPCs
-- Next steps for further enhancing VPC security and scalability
+In this guide, we have successfully set up a secure AWS VPC with public and private subnets using Ubuntu instances. We configured Apache HTTP Server on a public subnet instance and MySQL Database Server on a private subnet instance, ensuring security through proper subnet isolation and security group configurations.
 
-### References
-- Links to official AWS documentation and resources
-- Additional reading materials on AWS VPC design and security best practices
+### Next Steps
+- Explore further AWS VPC capabilities such as NAT Gateway for outbound internet access from private instances.
+- Implement more advanced security features like AWS Security Groups and Network ACLs for fine-grained access control.
+
+---
